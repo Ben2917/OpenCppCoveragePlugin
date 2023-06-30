@@ -220,15 +220,27 @@
     <Content Include="Newtonsoft.Json.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="OpenCppCoverage-x64\boost_date_time-vc142-mt-x64-1_72.dll" />
-    <Content Include="OpenCppCoverage-x64\boost_filesystem-vc142-mt-x64-1_72.dll" />
+    <Content Include="OpenCppCoverage-x64\boost_date_time-vc142-mt-x64-1_72.dll">
+        <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="OpenCppCoverage-x64\boost_filesystem-vc142-mt-x64-1_72.dll">
+        <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="OpenCppCoverage-x64\boost_iostreams.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="OpenCppCoverage-x64\boost_locale-vc142-mt-x64-1_72.dll" />
-    <Content Include="OpenCppCoverage-x64\boost_log-vc142-mt-x64-1_72.dll" />
-    <Content Include="OpenCppCoverage-x64\boost_program_options-vc142-mt-x64-1_72.dll" />
-    <Content Include="OpenCppCoverage-x64\boost_thread-vc142-mt-x64-1_72.dll" />
+    <Content Include="OpenCppCoverage-x64\boost_locale-vc142-mt-x64-1_72.dll">
+        <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="OpenCppCoverage-x64\boost_log-vc142-mt-x64-1_72.dll">
+        <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="OpenCppCoverage-x64\boost_program_options-vc142-mt-x64-1_72.dll">
+        <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="OpenCppCoverage-x64\boost_thread-vc142-mt-x64-1_72.dll">
+        <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="OpenCppCoverage-x64\bz2.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
@@ -245,6 +257,9 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="OpenCppCoverage-x64\libprotobuf.dll">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="OpenCppCoverage-x64\libprotobuf-lite.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="OpenCppCoverage-x64\lzma.dll">
@@ -323,15 +338,15 @@
     <Content Include="OpenCppCoverage-x64\zstd.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="OpenCppCoverage-x86\boost_date_time-vc142-mt-x32-1_72.dll" />
-    <Content Include="OpenCppCoverage-x86\boost_filesystem-vc142-mt-x32-1_72.dll" />
+    <Content Include="OpenCppCoverage-x86\boost_date_time-vc142-mt-x32-1_72.dll"/>
+    <Content Include="OpenCppCoverage-x86\boost_filesystem-vc142-mt-x32-1_72.dll"/>
     <Content Include="OpenCppCoverage-x86\boost_iostreams.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="OpenCppCoverage-x86\boost_locale-vc142-mt-x32-1_72.dll" />
-    <Content Include="OpenCppCoverage-x86\boost_log-vc142-mt-x32-1_72.dll" />
-    <Content Include="OpenCppCoverage-x86\boost_program_options-vc142-mt-x32-1_72.dll" />
-    <Content Include="OpenCppCoverage-x86\boost_thread-vc142-mt-x32-1_72.dll" />
+    <Content Include="OpenCppCoverage-x86\boost_locale-vc142-mt-x32-1_72.dll"/>
+    <Content Include="OpenCppCoverage-x86\boost_log-vc142-mt-x32-1_72.dll"/>
+    <Content Include="OpenCppCoverage-x86\boost_program_options-vc142-mt-x32-1_72.dll"/>
+    <Content Include="OpenCppCoverage-x86\boost_thread-vc142-mt-x32-1_72.dll"/>
     <Content Include="OpenCppCoverage-x86\bz2.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
