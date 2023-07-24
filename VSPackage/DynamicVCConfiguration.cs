@@ -24,9 +24,9 @@ namespace OpenCppCoverage.VSPackage
             this.configuration_ = configuration;
             this.DebugSettings = new DynamicVCDebugSettings(configuration_.DebugSettings);
 
-            var compilerTool = GetTool(configuration, "VCCLCompilerTool");
-            if (compilerTool != null)
-                this.OptionalVCCLCompilerTool = new DynamicVCCLCompilerTool(compilerTool);
+            //var compilerTool = GetTool(configuration, "VCCLCompilerTool");
+            //if (compilerTool != null)
+            //    this.OptionalVCCLCompilerTool = new DynamicVCCLCompilerTool(compilerTool);
         }
 
         //---------------------------------------------------------------------
