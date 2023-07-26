@@ -17,10 +17,13 @@
 using EnvDTE;
 using EnvDTE80;
 using GalaSoft.MvvmLight.Command;
+using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.Shell;
 using OpenCppCoverage.VSPackage.Helper;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Controls;
@@ -99,9 +102,35 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
             if (activeConfiguration != null)
             {
                 var projects = new List<ExtendedProject>();
+                foreach (Project pj in solution.Projects)
+                {
+                    var extendedProjects = new List<ExtendedProject>();
+                    if (pj.Kind == EnvDTE80.ProjectKinds.vsProjectKindSolutionFolder)
+                    {
+                        foreach (ProjectItem projectItem in pj.ProjectItems)
+                        {
+                            var subProject = projectItem.SubProject;
 
-                //foreach (Project pj in solution.Projects)
-                //    projects.AddRange(CreateExtendedProjectsFor(project));
+                            //if (subProject != null)
+                            //    projects.AddRange(CreateExtendedProjectsFor(subProject));
+                        }
+                    }
+                    else
+                    {
+                        dynamic projectObject = pj.Object;
+
+                        try
+                        {
+                            if (projectObject != null && projectObject.Kind == "VCProject")
+                                projects.Add(new ExtendedProject(pj, new DynamicVCProject(projectObject)));
+                        }
+                        catch (RuntimeBinderException)
+                        {
+                            // Nothing because not a VCProject
+                        }
+                    }
+                    projects.AddRange(extendedProjects);
+                }
 
                 ExtendedProject project = null;
 
@@ -131,22 +160,88 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
                 }
 
                 if (project == null)
-                    goto Cleanup_and_exit;        
+                    goto Cleanup_and_exit;
 
-                // var startupConfiguration = this.configurationManager.GetConfiguration(activeConfiguration, project);
-                // var debugSettings = startupConfiguration.DebugSettings;
+                DynamicVCConfiguration startupConfiguration = null;
+                var contexts = activeConfiguration.SolutionContexts.Cast<SolutionContext>();
+                var context = contexts.FirstOrDefault(c => c.ProjectName == project.UniqueName);
+
+                if (context == null)
+                    startupConfiguration = null;
+
+                if (!context.ShouldBuild)
+                {
+                    startupConfiguration = null;
+                }
+
+                var configurations = project.Configurations;
+                startupConfiguration = configurations.FirstOrDefault(
+                    c => c.ConfigurationName == context.ConfigurationName && c.PlatformName == context.PlatformName);
+
+                var debugSettings = startupConfiguration.DebugSettings;
 
                 var settings = new StartUpProjectSettings();
-                //settings.WorkingDir = startupConfiguration.Evaluate(debugSettings.WorkingDirectory);
-                //settings.Arguments = startupConfiguration.Evaluate(debugSettings.CommandArguments);
-                //settings.Command = startupConfiguration.Evaluate(debugSettings.Command);
-                // settings.SolutionConfigurationName = this.configurationManager.GetSolutionConfigurationName(activeConfiguration);
+                settings.WorkingDir = startupConfiguration.Evaluate(debugSettings.WorkingDirectory);
+                settings.Arguments = startupConfiguration.Evaluate(debugSettings.CommandArguments);
+                settings.Command = startupConfiguration.Evaluate(debugSettings.Command);
+                settings.SolutionConfigurationName = activeConfiguration.Name + '|' + activeConfiguration.PlatformName;
                 settings.ProjectName = project.UniqueName;
                 settings.ProjectPath = project.Path;
-                // settings.CppProjects = BuildCppProject(activeConfiguration, this.configurationManager, projects);
+
+                var cppProjects = new List<StartUpProjectSettings.CppProject>();
+
+                int projectsProcessed = 0;
+                foreach (var pj in projects)
+                {
+                    var localContext = contexts.FirstOrDefault(c => c.ProjectName == project.UniqueName);
+
+                    if (localContext == null)
+                        startupConfiguration = null;
+
+                    if (!localContext.ShouldBuild)
+                    {
+                        startupConfiguration = null;
+                    }
+
+                    var localConfigurations = project.Configurations;
+                    var localConfiguration = localConfigurations.FirstOrDefault(
+                        c => c.ConfigurationName == localContext.ConfigurationName && c.PlatformName == localContext.PlatformName);
+
+                    if (localConfiguration != null)
+                    {
+                        var cppProject = new StartUpProjectSettings.CppProject()
+                        {
+                            ModulePath = localConfiguration.PrimaryOutput,
+                            SourcePaths = PathHelper.ComputeCommonFolders(pj.Files.Select(f => f.FullPath)),
+                            Path = pj.UniqueName
+                        };
+                        cppProjects.Add(cppProject);
+                    }
+
+                    projectsProcessed++;
+                    Debug.WriteLine("Processed project {0} of {1}", projectsProcessed, projects.Count());
+                }
+
+                settings.CppProjects = cppProjects;
 
                 settings.IsOptimizedBuildEnabled = false;
-                // settings.EnvironmentVariables = GetEnvironmentVariables(startupConfiguration);
+
+                var environmentVariables = new List<KeyValuePair<string, string>>();
+                string environmentStr = startupConfiguration.Evaluate("$(LocalDebuggerEnvironment)");
+
+                foreach (var str in environmentStr.Split('\n'))
+                {
+                    var equalIndex = str.IndexOf('=');
+                    if (equalIndex != -1 && equalIndex != str.Length - 1)
+                    {
+                        var key = str.Substring(0, equalIndex);
+                        var value = str.Substring(equalIndex + 1);
+
+                        environmentVariables.Add(new KeyValuePair<string, string>(key, value));
+                    }
+                }
+
+                settings.EnvironmentVariables = environmentVariables;
 
                 if (settings != null)
                     return settings;
