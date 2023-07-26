@@ -20,6 +20,7 @@ using Microsoft.CSharp.RuntimeBinder;
 using OpenCppCoverage.VSPackage.Helper;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace OpenCppCoverage.VSPackage.Settings
@@ -212,6 +213,7 @@ namespace OpenCppCoverage.VSPackage.Settings
         {
             var cppProjects = new List<StartUpProjectSettings.CppProject>();
 
+            int projectsProcessed = 0;
             foreach (var project in projects)
             {
                 var configuration = configurationManager.FindConfiguration(activeConfiguration, project);
@@ -226,6 +228,11 @@ namespace OpenCppCoverage.VSPackage.Settings
                     };
                     cppProjects.Add(cppProject);
                 }
+
+                project.FreeCOMResources(); // Project is invalidated after this call. Don't reuse it!
+
+                projectsProcessed++;
+                Debug.WriteLine("Processed project {0} of {1}", projectsProcessed, projects.Count());
             }
 
             return cppProjects;

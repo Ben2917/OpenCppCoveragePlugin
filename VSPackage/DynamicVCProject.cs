@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace OpenCppCoverage.VSPackage
 {
@@ -24,6 +25,11 @@ namespace OpenCppCoverage.VSPackage
         public DynamicVCProject(dynamic project) 
         {
             project_ = project;
+        }
+
+        public void FreeCOMResources()
+        {
+            Marshal.ReleaseComObject(project_);
         }
 
         //---------------------------------------------------------------------

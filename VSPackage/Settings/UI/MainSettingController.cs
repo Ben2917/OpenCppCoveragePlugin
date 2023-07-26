@@ -14,9 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+using EnvDTE;
+using EnvDTE80;
 using GalaSoft.MvvmLight.Command;
+using Microsoft.VisualStudio.Shell;
 using OpenCppCoverage.VSPackage.Helper;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -28,7 +34,7 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
         readonly IOpenCppCoverageCmdLine openCppCoverageCmdLine;
         readonly ISettingsStorage settingsStorage;
         readonly CoverageRunner coverageRunner;
-        readonly IStartUpProjectSettingsBuilder startUpProjectSettingsBuilder;
+        readonly IServiceProvider serviceProvider;
 
         string selectedProjectPath;
         string solutionConfigurationName;
@@ -39,8 +45,8 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
         public MainSettingController(
             ISettingsStorage settingsStorage,
             IOpenCppCoverageCmdLine openCppCoverageCmdLine,
-            IStartUpProjectSettingsBuilder startUpProjectSettingsBuilder,
-            CoverageRunner coverageRunner)
+            CoverageRunner coverageRunner,
+            IServiceProvider serviceProvider)
         {
             this.settingsStorage = settingsStorage;
             this.openCppCoverageCmdLine = openCppCoverageCmdLine;
@@ -57,7 +63,7 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
             this.MiscellaneousSettingController = new MiscellaneousSettingController();
 
             this.coverageRunner = coverageRunner;
-            this.startUpProjectSettingsBuilder = startUpProjectSettingsBuilder;
+            this.serviceProvider = serviceProvider;
         }
 
         //---------------------------------------------------------------------
@@ -84,7 +90,74 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
         //---------------------------------------------------------------------
         StartUpProjectSettings ComputeStartUpProjectSettings(ProjectSelectionKind kind)
         {
-            return this.startUpProjectSettingsBuilder.ComputeSettings(kind);
+            var dte = (DTE2)serviceProvider.GetService(typeof(EnvDTE.DTE));
+
+            var solution = (Solution2)dte.Solution;
+            var solutionBuild = (SolutionBuild2)solution.SolutionBuild;
+            var activeConfiguration = (SolutionConfiguration2)solutionBuild.ActiveConfiguration;
+
+            if (activeConfiguration != null)
+            {
+                var projects = new List<ExtendedProject>();
+
+                //foreach (Project pj in solution.Projects)
+                //    projects.AddRange(CreateExtendedProjectsFor(project));
+
+                ExtendedProject project = null;
+
+                switch (kind)
+                {
+                    case ProjectSelectionKind.StartUpProject:
+                        var startupProjectsNames = solution.SolutionBuild.StartupProjects as object[];
+
+                        if (startupProjectsNames == null)
+                            return null;
+
+                        var startupProjectsSet = new HashSet<String>();
+                        foreach (String pjName in startupProjectsNames)
+                            startupProjectsSet.Add(pjName);
+
+                        project = projects.Where(p => startupProjectsSet.Contains(p.UniqueName)).FirstOrDefault();
+                        break;
+                    case ProjectSelectionKind.SelectedProject:
+                        var selectedProjects = ((Array)dte.ActiveSolutionProjects).Cast<Project>();
+
+                        if (selectedProjects.Count() != 1)
+                            return null;
+
+                        var projectName = selectedProjects.First().UniqueName;
+                        project = projects.Where(p => p.UniqueName == projectName).FirstOrDefault();
+                        break;
+                }
+
+                if (project == null)
+                    goto Cleanup_and_exit;        
+
+                // var startupConfiguration = this.configurationManager.GetConfiguration(activeConfiguration, project);
+                // var debugSettings = startupConfiguration.DebugSettings;
+
+                var settings = new StartUpProjectSettings();
+                //settings.WorkingDir = startupConfiguration.Evaluate(debugSettings.WorkingDirectory);
+                //settings.Arguments = startupConfiguration.Evaluate(debugSettings.CommandArguments);
+                //settings.Command = startupConfiguration.Evaluate(debugSettings.Command);
+                // settings.SolutionConfigurationName = this.configurationManager.GetSolutionConfigurationName(activeConfiguration);
+                settings.ProjectName = project.UniqueName;
+                settings.ProjectPath = project.Path;
+                // settings.CppProjects = BuildCppProject(activeConfiguration, this.configurationManager, projects);
+
+                settings.IsOptimizedBuildEnabled = false;
+                // settings.EnvironmentVariables = GetEnvironmentVariables(startupConfiguration);
+
+                if (settings != null)
+                    return settings;
+            }
+
+Cleanup_and_exit:
+            Marshal.ReleaseComObject(dte);
+            return new StartUpProjectSettings
+            {
+                CppProjects = new List<StartUpProjectSettings.CppProject>()
+            };
         }
 
         //---------------------------------------------------------------------

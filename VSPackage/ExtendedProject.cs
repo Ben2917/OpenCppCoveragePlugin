@@ -16,6 +16,7 @@
 
 using EnvDTE;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace OpenCppCoverage.VSPackage
 {
@@ -26,6 +27,12 @@ namespace OpenCppCoverage.VSPackage
         {
             this.project_ = project;
             this.vcProject_ = vcProject;
+        }
+
+        public void FreeCOMResources()
+        {
+            vcProject_.FreeCOMResources();
+            Marshal.ReleaseComObject(project_);
         }
         
         //---------------------------------------------------------------------
