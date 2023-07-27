@@ -88,7 +88,6 @@ namespace OpenCppCoverage.VSPackage
                     coverageViewManager, deserializer, errorHandler, openCppCoverageRunner);
 
                 var configurationManager = new ConfigurationManager();
-                // var settingsBuilder = new StartUpProjectSettingsBuilder(dte, configurationManager);
                 var mainSettingController = new MainSettingController(
                     new SettingsStorage(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)),
                     openCppCoverageCmdLine,

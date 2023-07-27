@@ -29,12 +29,6 @@ namespace OpenCppCoverage.VSPackage
             this.vcProject_ = vcProject;
         }
 
-        public void FreeCOMResources()
-        {
-            vcProject_.FreeCOMResources();
-            Marshal.ReleaseComObject(project_);
-        }
-        
         //---------------------------------------------------------------------
         public string UniqueName
         {

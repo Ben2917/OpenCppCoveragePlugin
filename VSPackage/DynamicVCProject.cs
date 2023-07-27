@@ -27,11 +27,6 @@ namespace OpenCppCoverage.VSPackage
             project_ = project;
         }
 
-        public void FreeCOMResources()
-        {
-            Marshal.ReleaseComObject(project_);
-        }
-
         //---------------------------------------------------------------------
         public List<DynamicVCConfiguration> Configurations
         {

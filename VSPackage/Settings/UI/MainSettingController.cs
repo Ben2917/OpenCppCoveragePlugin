@@ -248,7 +248,10 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
 
                 settings.CppProjects = cppProjects;
 
-                settings.IsOptimizedBuildEnabled = false;
+                var vcclCompilerTool = startupConfiguration.OptionalVCCLCompilerTool;
+                if (vcclCompilerTool == null)
+                    return null;
+                settings.IsOptimizedBuildEnabled = !vcclCompilerTool.IsOptimizeDisabled;
 
                 var environmentVariables = new List<KeyValuePair<string, string>>();
                 string environmentStr = startupConfiguration.Evaluate("$(LocalDebuggerEnvironment)");
