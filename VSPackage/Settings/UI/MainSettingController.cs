@@ -90,9 +90,43 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
             }
         }
 
+        List<ExtendedProject> CreateExtendedProjectsFor(Project project)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            var projects = new List<ExtendedProject>();
+
+            if (project.Kind == EnvDTE80.ProjectKinds.vsProjectKindSolutionFolder)
+            {
+                foreach (ProjectItem projectItem in project.ProjectItems)
+                {
+                    var subProject = projectItem.SubProject;
+                    if (subProject != null)
+                        projects.AddRange(CreateExtendedProjectsFor(subProject));
+                }
+            }
+            else
+            {
+                dynamic projectObject = project.Object;
+
+                try
+                {
+                    if (projectObject != null && projectObject.Kind == "VCProject")
+                        projects.Add(new ExtendedProject(project, new DynamicVCProject(projectObject)));
+                }
+                catch (RuntimeBinderException)
+                {
+                    // Nothing because not a VCProject
+                }
+            }
+
+            return projects;
+        }
+
         //---------------------------------------------------------------------
         StartUpProjectSettings ComputeStartUpProjectSettings(ProjectSelectionKind kind)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             var dte = (DTE2)serviceProvider.GetService(typeof(EnvDTE.DTE));
 
             var solution = (Solution2)dte.Solution;
@@ -104,36 +138,10 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
                 var projects = new List<ExtendedProject>();
                 foreach (Project pj in solution.Projects)
                 {
-                    var extendedProjects = new List<ExtendedProject>();
-                    if (pj.Kind == EnvDTE80.ProjectKinds.vsProjectKindSolutionFolder)
-                    {
-                        foreach (ProjectItem projectItem in pj.ProjectItems)
-                        {
-                            var subProject = projectItem.SubProject;
-
-                            //if (subProject != null)
-                            //    projects.AddRange(CreateExtendedProjectsFor(subProject));
-                        }
-                    }
-                    else
-                    {
-                        dynamic projectObject = pj.Object;
-
-                        try
-                        {
-                            if (projectObject != null && projectObject.Kind == "VCProject")
-                                projects.Add(new ExtendedProject(pj, new DynamicVCProject(projectObject)));
-                        }
-                        catch (RuntimeBinderException)
-                        {
-                            // Nothing because not a VCProject
-                        }
-                    }
-                    projects.AddRange(extendedProjects);
+                    projects.AddRange(CreateExtendedProjectsFor(pj));
                 }
 
                 ExtendedProject project = null;
-
                 switch (kind)
                 {
                     case ProjectSelectionKind.StartUpProject:
@@ -164,7 +172,11 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
 
                 DynamicVCConfiguration startupConfiguration = null;
                 var contexts = activeConfiguration.SolutionContexts.Cast<SolutionContext>();
-                var context = contexts.FirstOrDefault(c => c.ProjectName == project.UniqueName);
+                var context = contexts.FirstOrDefault(c =>
+                {
+                    Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+                    return c.ProjectName == project.UniqueName;
+                });
 
                 if (context == null)
                     startupConfiguration = null;
@@ -176,7 +188,11 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
 
                 var configurations = project.Configurations;
                 startupConfiguration = configurations.FirstOrDefault(
-                    c => c.ConfigurationName == context.ConfigurationName && c.PlatformName == context.PlatformName);
+                    c =>
+                    {
+                        Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+                        return c.ConfigurationName == context.ConfigurationName && c.PlatformName == context.PlatformName;
+                    });
 
                 var debugSettings = startupConfiguration.DebugSettings;
 
@@ -193,7 +209,11 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
                 int projectsProcessed = 0;
                 foreach (var pj in projects)
                 {
-                    var localContext = contexts.FirstOrDefault(c => c.ProjectName == project.UniqueName);
+                    var localContext = contexts.FirstOrDefault(c =>
+                    {
+                        Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+                        return c.ProjectName == project.UniqueName;
+                    });
 
                     if (localContext == null)
                         startupConfiguration = null;
@@ -205,7 +225,11 @@ namespace OpenCppCoverage.VSPackage.Settings.UI
 
                     var localConfigurations = project.Configurations;
                     var localConfiguration = localConfigurations.FirstOrDefault(
-                        c => c.ConfigurationName == localContext.ConfigurationName && c.PlatformName == localContext.PlatformName);
+                        c =>
+                        {
+                            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+                            return c.ConfigurationName == localContext.ConfigurationName && c.PlatformName == localContext.PlatformName;
+                        });
 
                     if (localConfiguration != null)
                     {
