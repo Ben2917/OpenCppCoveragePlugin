@@ -229,8 +229,6 @@ namespace OpenCppCoverage.VSPackage.Settings
                     cppProjects.Add(cppProject);
                 }
 
-                project.FreeCOMResources(); // Project is invalidated after this call. Don't reuse it!
-
                 projectsProcessed++;
                 Debug.WriteLine("Processed project {0} of {1}", projectsProcessed, projects.Count());
             }
